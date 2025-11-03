@@ -1,179 +1,131 @@
-Fake News Detection using Deep Learning (GRU & RNN)
-📘 Overview
+# 📰 Fake News Detection using Deep Learning (GRU vs RNN)
 
-This project detects fake and real news articles using two deep learning models —
-GRU (Gated Recurrent Unit) and Simple RNN (Recurrent Neural Network).
+### 📘 Overview
+This project focuses on **detecting fake and real news articles** using **Deep Learning models** —
+specifically **Gated Recurrent Unit (GRU)** and **Simple Recurrent Neural Network (RNN)**.
 
-Both models are trained on a dataset of real and fake news headlines and texts.
-At the end, their performance is compared to understand how each model behaves with text data.
+Both models are trained on a dataset of real and fake news articles from Kaggle.
+The main goal is to compare how each model performs in understanding text sequences and classifying news correctly.
 
-⚙️ Steps in the Code (Explained Simply)
-1️⃣ Import Libraries and Load Dataset
+---
 
-We start by importing Python libraries like Pandas, TensorFlow, and Scikit-learn.
-Then we load two CSV files:
+## ⚙️ Project Workflow
 
-Fake.csv → contains fake news articles
+### 1️⃣ Data Loading
+We use two datasets:
+- **Fake.csv** → Fake news articles
+- **True.csv** → Real news articles
 
-True.csv → contains real news articles
+Each dataset is labeled:
+- `0` → Fake
+- `1` → Real
 
-A new column label is added:
+Both files are merged into one DataFrame and shuffled randomly to avoid bias.
 
-0 → Fake
+### 2️⃣ Text Cleaning
+A custom function `clean_text()` removes punctuation, numbers, stopwords, and agency names.
+This keeps only meaningful words.
 
-1 → Real
+### 3️⃣ Combining Title and Text
+The `title` and `text` columns are merged to help the model learn from both.
 
-Finally, both files are combined into one big dataset and shuffled randomly.
+### 4️⃣ Tokenization and Padding
+Words are converted into numbers using Keras **Tokenizer** and padded to a fixed length (300 tokens).
 
-2️⃣ Data Inspection and Cleaning
+### 5️⃣ Train-Test Split
+80% training data, 20% testing data with stratification for balance.
 
-We check:
+### 6️⃣ GRU Model
+A GRU can remember important words and forget irrelevant ones.
 
-The number of rows and columns
+```python
+GRU_model = Sequential([
+    Embedding(vocab_size, embedding_dim, input_length=max_len),
+    GRU(128, dropout=0.3, recurrent_dropout=0.2),
+    Dense(64, activation='relu'),
+    Dropout(0.3),
+    Dense(1, activation='sigmoid')
+])
+```
 
-Whether any values are missing
+### 7️⃣ Simple RNN Model
+A basic RNN processes words in order but cannot remember long context.
 
-Then we clean the text using the clean_text() function:
+```python
+RNN_model = Sequential([
+    Embedding(vocab_size, embedding_dim, input_length=max_len),
+    SimpleRNN(128, dropout=0.2, recurrent_dropout=0.2),
+    Dense(64, activation='relu'),
+    Dropout(0.3),
+    Dense(1, activation='sigmoid')
+])
+```
 
-Remove special characters and numbers
+### 8️⃣ Model Evaluation
+Both models are compared using accuracy and F1-score.
 
-Convert text to lowercase
+```python
+from sklearn.metrics import accuracy_score, f1_score
 
-Remove stopwords like the, and, is
+y_pred_gru = (GRU_model.predict(X_test) > 0.5).astype(int)
+y_pred_rnn = (RNN_model.predict(X_test) > 0.5).astype(int)
 
-Remove names of news agencies like BBC, Reuters
+print("GRU Accuracy:", accuracy_score(y_test, y_pred_gru))
+print("RNN Accuracy:", accuracy_score(y_test, y_pred_rnn))
+```
 
-This step keeps only the meaningful words.
+---
 
-3️⃣ Combine Title and Article Text
+## 📊 Results Summary
 
-The news title and main text are merged together.
-This helps the model learn from both headline and content.
+| Model | Accuracy | Comment |
+|--------|-----------|----------|
+| **GRU** | ~92–94% | Retains long-term context |
+| **RNN** | ~55–65% | Struggles with long text |
 
-4️⃣ Tokenization and Padding
+---
 
-Neural networks can’t read words, so we convert each word into a number (token).
-We then make all news articles the same length by padding shorter ones with zeros.
-This makes sure every input to the model is of the same size (300 words).
+## ❓ Common Viva Questions
 
-5️⃣ Train–Test Split
+**Q1:** Why GRU over RNN?  
+🟢 GRU uses gates to remember important information; RNN forgets earlier context.
 
-We divide the data into:
+**Q2:** What is embedding?  
+🟢 Converts words into dense vectors to capture relationships.
 
-Training set (80%) → used to teach the model
+**Q3:** What activation function is used?  
+🟢 Sigmoid for binary classification (Fake vs Real).
 
-Testing set (20%) → used to check how well the model performs on unseen data
+**Q4:** Why is dropout used?  
+🟢 To prevent overfitting.
 
-6️⃣ GRU Model
+**Q5:** What is the main conclusion?  
+🟢 GRU gives higher accuracy and handles text sequences better than RNN.
 
-A GRU (Gated Recurrent Unit) is a smart neural network that can remember important words and forget unimportant ones while reading a sentence.
+---
 
-GRU architecture used:
+## ▶️ How to Run
 
-Embedding layer (to convert words into numeric vectors)
+### 🔹 Google Colab
+1. Upload `Fake.csv`, `True.csv`, and `fake_news_predictor.py`.
+2. Run all cells.
+3. Compare GRU and RNN accuracy.
 
-GRU layer (128 units)
+### 🔹 Local Machine
+```bash
+pip install tensorflow pandas scikit-learn nltk matplotlib
+python fake_news_predictor.py
+```
 
-Dense layers with ReLU activation
+---
 
-Dropout layers (to prevent overfitting)
+## 🚀 Future Work
+- Add **LSTM** or **BERT** for deeper comparison.
+- Use **GloVe embeddings** for semantic meaning.
+- Deploy using **Streamlit** or **FastAPI** for real-time predictions.
 
-Output layer with sigmoid activation (gives output between 0 and 1)
+---
 
-We compile it with binary cross-entropy loss and Adam optimizer.
-
-7️⃣ Training GRU Model
-
-We train the GRU model for 5 epochs with:
-
-Batch size = 64
-
-Validation split = 10%
-
-During training, we track both training and validation accuracy to make sure the model is learning properly.
-
-8️⃣ Simple RNN Model
-
-We also build a Simple RNN model.
-It’s similar to GRU but much simpler — it doesn’t have memory gates.
-This means it can’t remember long-term information as effectively.
-
-Architecture:
-
-Embedding layer
-
-SimpleRNN layer (128 units)
-
-Dense + Dropout layers
-
-Sigmoid output
-
-9️⃣ RNN Training and Evaluation
-
-The RNN model is trained the same way as GRU.
-After training, we check the test accuracy.
-Usually, RNN performs worse (around 50–60%) because it forgets earlier context in long text.
-
-🔟 Model Comparison
-
-Finally, we compare GRU and RNN on:
-
-Accuracy
-
-F1-score
-
-Confusion Matrix (optional visualization)
-
-GRU is usually much better because it handles long sequences and dependencies better.
-
-📊 Expected Results
-Model	Accuracy	Comment
-GRU	~90–94%	Learns long-term patterns effectively
-RNN	~55–65%	Forgets older context, lower accuracy
-
-Conclusion:
-GRU outperforms RNN because it remembers important information across longer text sequences.
-
-🧩 File Summary
-File	Description
-Fake.csv	Fake news dataset
-True.csv	Real news dataset
-fake_news_predictor.py	Full Python script with GRU and RNN training
-GRU_Model.h5	Saved trained GRU model
-tokenizer.pkl	Tokenizer file for converting text to tokens
-🧠 Common Viva / Interview Questions (with Answers)
-
-Q1. What is the main goal of this project?
-A: To detect whether a news article is fake or real using deep learning models.
-
-Q2. What dataset did you use?
-A: The Kaggle “Fake and Real News Dataset,” containing around 44,000 news articles.
-
-Q3. Why did you use GRU and RNN?
-A: Both are sequence models that can process text word by word. GRU is an improved version of RNN that handles long-term dependencies better.
-
-Q4. Why does RNN give lower accuracy than GRU?
-A: RNN forgets earlier words due to the vanishing gradient problem, while GRU uses gates to remember important information.
-
-Q5. What does the Embedding layer do?
-A: It converts words into dense numeric vectors that represent their meaning.
-
-Q6. What is padding and why is it used?
-A: Padding makes all text inputs the same length by adding zeros, which is required for batch processing in neural networks.
-
-Q7. What activation function is used in the last layer?
-A: Sigmoid, because we have a binary classification (Fake = 0, Real = 1).
-
-Q8. What is dropout and why do we use it?
-A: Dropout randomly disables neurons during training to prevent overfitting and make the model more general.
-
-Q9. What optimizer and loss function did you use?
-A: Adam optimizer with binary cross-entropy loss.
-
-Q10. What did you conclude from this project?
-A: GRU achieved higher accuracy and generalization than RNN, proving that gated recurrent units are more effective for text classification tasks like fake news detection.
-
-✅ Summary
-
-This project demonstrates how deep learning models process natural language to detect fake news.
-Even though both RNN and GRU belong to the same family, GRU performs better because it can remember context, forget irrelevant data, and train faster.
+## ✨ Summary
+This project demonstrates fake news detection using GRU and RNN.  
+GRU clearly outperforms RNN, proving its effectiveness in capturing long-term dependencies in text data.
